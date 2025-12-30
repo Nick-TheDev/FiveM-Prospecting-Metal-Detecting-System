@@ -65,14 +65,40 @@ function ScenaCustom(coords, rotation, pedTable, propTable, durata, cam)
 
     NetworkStartSynchronisedScene(scene)
 
+    local camObj = CreateCam("DEFAULT_SCRIPTED_CAMERA", true)
+
+    local camOffset = vector3(-1.4, -1.6, 1.2)
+
+    local heading = math.rad(rotation.z)
+    local camX = coords.x + (camOffset.x * math.cos(heading) - camOffset.y * math.sin(heading))
+    local camY = coords.y + (camOffset.x * math.sin(heading) + camOffset.y * math.cos(heading))
+    local camZ = coords.z + camOffset.z
+
+    SetCamCoord(camObj, camX, camY, camZ)
+    SetCamRot(camObj, -18.0, 0.0, rotation.z + 180.0, 2)
+    SetCamFov(camObj, 42.0)
+
+    PointCamAtCoord(camObj, coords.x, coords.y, coords.z + 0.6)
+
+    SetCamActive(camObj, true)
+    RenderScriptCams(true, false, 0, true, false)
+
+    CreateThread(function()
+        while DoesCamExist(camObj) do
+            DisableAllControlActions(0)
+            Wait(0)
+        end
+    end)
+
     SetTimeout(durata, function()
         for _, prop in ipairs(spawnedProps) do
             DeleteObject(prop)
         end
+        RenderScriptCams(false, true, 500, true, false)
+        DestroyCam(camObj, false)
         ClearPedTasks(cache.ped)
     end)
 end
-
 
 CreateThread(function()
     for k, v in pairs(ConfigMetalDetector.Zone) do
