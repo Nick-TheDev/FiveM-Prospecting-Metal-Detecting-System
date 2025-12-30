@@ -6,87 +6,73 @@ local coordinate_prec = nil
 local attachedEntities = {}
 local npcVendita = nil
 
-function ScenaCustom(coords, rotation, peds, props, durata, camData)
+function ScenaCustom(coords, rotation, pedTable, propTable, durata, cam)
     local scene = NetworkCreateSynchronisedScene(
         coords.x, coords.y, coords.z,
         rotation.x, rotation.y, rotation.z,
-        2, true, false, 1.0, 0.0, 1.0
+        2, false, false, 1065353216, 0, 1.0
     )
 
-    -- CAMERA
-    local cam
-    if camData then
-        RequestAnimDict(camData.dict)
-        while not HasAnimDictLoaded(camData.dict) do Wait(0) end
-
-        cam = CreateCam("DEFAULT_ANIMATED_CAMERA", true)
-        PlayCamAnim(cam, camData.nome, camData.dict, coords, rotation, false, 2)
-        RenderScriptCams(true, false, 0, true, true)
+    -- carica anim dict
+    for _, pedInfo in ipairs(pedTable) do
+        RequestAnimDict(pedInfo.anim.dict)
+        while not HasAnimDictLoaded(pedInfo.anim.dict) do Wait(0) end
     end
 
-    -- PED
-    for _, data in ipairs(peds) do
-        RequestAnimDict(data.anim.dict)
-        while not HasAnimDictLoaded(data.anim.dict) do Wait(0) end
-
-        NetworkAddPedToSynchronisedScene(
-            data.ped,
-            scene,
-            data.anim.dict,
-            data.anim.anim,
-            8.0, -8.0, 0, 0, 1148846080, 0
-        )
-    end
-
-    -- PROPS
     local spawnedProps = {}
 
-    for _, p in ipairs(props) do
-        RequestModel(p.model)
-        while not HasModelLoaded(p.model) do Wait(0) end
+    for _, propInfo in ipairs(propTable) do
+        RequestModel(propInfo.model)
+        while not HasModelLoaded(propInfo.model) do Wait(0) end
 
-        local obj = CreateObject(p.model, coords.x, coords.y, coords.z, true, true, false)
-        SetEntityCollision(obj, false, true)
+        local prop = CreateObject(propInfo.model, coords.x, coords.y, coords.z, true, true, false)
+        table.insert(spawnedProps, prop)
 
-        RequestAnimDict(p.anim.dict)
-        while not HasAnimDictLoaded(p.anim.dict) do Wait(0) end
+        RequestAnimDict(propInfo.anim.dict)
+        while not HasAnimDictLoaded(propInfo.anim.dict) do Wait(0) end
 
         NetworkAddEntityToSynchronisedScene(
-            obj,
+            prop,
             scene,
-            p.anim.dict,
-            p.anim.anim,
-            8.0, -8.0, 0
+            propInfo.anim.dict,
+            propInfo.anim.anim,
+            8.0, -8.0, 0, 1148846080
         )
+    end
 
-        table.insert(spawnedProps, {
-            entity = obj,
-            deleteAfter = p.cancella_prop
-        })
+    for _, pedInfo in ipairs(pedTable) do
+        NetworkAddPedToSynchronisedScene(
+            pedInfo.ped,
+            scene,
+            pedInfo.anim.dict,
+            pedInfo.anim.anim,
+            8.0, -8.0, 0, 16, 1148846080
+        )
+    end
+
+    if cam and cam.dict and cam.nome then
+        RequestAnimDict(cam.dict)
+        while not HasAnimDictLoaded(cam.dict) do Wait(0) end
+
+        NetworkAddEntityToSynchronisedScene(
+            cache.ped,
+            scene,
+            cam.dict,
+            cam.nome,
+            8.0, -8.0, 0, 16
+        )
     end
 
     NetworkStartSynchronisedScene(scene)
 
-    -- CLEANUP PROPS
-    for _, p in ipairs(spawnedProps) do
-        if p.deleteAfter then
-            CreateThread(function()
-                Wait(p.deleteAfter)
-                if DoesEntityExist(p.entity) then
-                    DeleteEntity(p.entity)
-                end
-            end)
+    SetTimeout(durata, function()
+        for _, prop in ipairs(spawnedProps) do
+            DeleteObject(prop)
         end
-    end
-
-    -- FINE SCENA
-    Wait(durata)
-
-    if cam then
-        RenderScriptCams(false, false, 0, true, true)
-        DestroyCam(cam)
-    end
+        ClearPedTasks(cache.ped)
+    end)
 end
+
 
 CreateThread(function()
     for k, v in pairs(ConfigMetalDetector.Zone) do
