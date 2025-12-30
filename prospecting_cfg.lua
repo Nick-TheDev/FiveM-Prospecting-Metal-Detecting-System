@@ -114,9 +114,9 @@ ConfigMetalDetector.Zone = {
             },
             debug = false,
             onEnter = function()
-                --if exports.ox_inventory:Search('count', ConfigMetalDetector.ItemName) > 0 then
-                --    ConfigMetalDetector.Notify('Metal Detector','Sei entrato in una zona di ricerca, utilizza il tuo metal detector!',4000,'bottom')
-                --end
+                if exports.ox_inventory:Search('count', ConfigMetalDetector.ItemName) > 0 then -- IF U DONT HAVE OX INVENTORY COMMENT THIS 
+                    ConfigMetalDetector.Notify('Metal Detector',"You have entered a search zone, use your metal detector!",4000,'bottom')
+                end
 
                 attualezona = "zona_1"
             end,
@@ -180,9 +180,9 @@ ConfigMetalDetector.Zone = {
             },
             debug = false,
             onEnter = function()
-                --if exports.ox_inventory:Search('count', ConfigMetalDetector.ItemName) > 0 then
-                --    ConfigMetalDetector.Notify('Metal Detector','Sei entrato in una zona di ricerca, utilizza il tuo metal detector!',4000,'bottom')
-                --end
+                if exports.ox_inventory:Search('count', ConfigMetalDetector.ItemName) > 0 then -- IF U DONT HAVE OX INVENTORY COMMENT THIS 
+                    ConfigMetalDetector.Notify('Metal Detector',"You have entered a search zone, use your metal detector!",4000,'bottom')
+                end
 
                 attualezona = "zona_2"
             end,
@@ -244,4 +244,5 @@ ConfigMetalDetector.VenditaItem = {
 -- Used for language selection
 function _L(str)
     return ConfigMetalDetector.Languages[ConfigMetalDetector.Locale][str] or str
+
 end
